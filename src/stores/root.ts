@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios, { AxiosError } from "axios";
-import { SnackbarProgrammatic as Snackbar } from 'buefy'
-
+import { SnackbarProgrammatic as Snackbar } from "buefy";
+import router from "@/router";
 
 interface User {
     id: number;
@@ -26,28 +26,29 @@ if (token !== "") {
     axios.defaults.headers.common["X-Auth-Token"] = token;
 }
 
+type rootState = 'init' | 'checking' | 'ready';
+
 export const useRootStore = defineStore({
     id: "root",
     state: () => ({
         backend: axios.create({ baseURL: "https://fluchs.testha.se" }),
         user: {} as User,
         isLoggedIn: false,
+        state: 'init' as rootState,
     }),
     actions: {
         async getUserProfile() {
+            this.state = 'checking';
             this.user = await this.backend
                 .get("/v1/me")
                 .then((r) => {
                     this.isLoggedIn = true;
+                    this.state = 'ready';
                     return r.data;
                 })
                 .catch((e) => {
-                    if (e instanceof AxiosError && e.response?.status === 401) {
-                        this.isLoggedIn = false;
-                    }
-                    else {
-                        this.showError(e);
-                    }
+                    this.state = 'ready';
+                    this.showError(e);
                 });
         },
         registerToken(token: string) {
@@ -61,11 +62,15 @@ export const useRootStore = defineStore({
         },
         showError(e: any) {
             console.error(e);
+            if (e instanceof AxiosError && e.response?.status === 401) {
+                this.isLoggedIn = false;
+                router.push("/");
+            }
             Snackbar.open({
                 type: "is-danger",
                 message: `${e}`,
                 indefinite: true,
-                position: 'is-bottom',
+                position: "is-bottom",
             });
         },
     },

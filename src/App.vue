@@ -1,13 +1,26 @@
 <script setup lang="ts">
 import { useRootStore } from "./stores/root";
+import { useFeedsStore } from "./stores/feeds";
 import { storeToRefs } from "pinia";
-import { DialogProgrammatic as Dialog } from 'buefy'
+import { computed } from "vue";
+import { DialogProgrammatic as Dialog } from "buefy";
 
+const rootStore = useRootStore();
+const feedsStore = useFeedsStore();
 
-const { user, isLoggedIn } = storeToRefs(useRootStore());
+const { user, isLoggedIn, state } = storeToRefs(rootStore);
+const { getUserProfile, registerToken, clearToken } = rootStore;
+const { getFeeds, getFeedCounters } = feedsStore;
 
-const { getUserProfile, registerToken, clearToken } = useRootStore();
-getUserProfile();
+getUserProfile().then(() => {
+  getFeeds().then(() => {
+    getFeedCounters();
+  });
+});
+
+const isLoading = computed(() => {
+  return state.value === 'checking';
+})
 
 function promptForToken() {
   Dialog.prompt({
@@ -21,11 +34,11 @@ function promptForToken() {
     },
   });
 }
-
 </script>
 
 <template>
   <div id="app">
+    <b-loading v-model="isLoading"></b-loading>
     <header>
       <div class="container">
         <b-navbar>
@@ -36,12 +49,12 @@ function promptForToken() {
           </template>
           <template #end>
             <b-navbar-dropdown :label="user.username" v-if="isLoggedIn">
-              <b-navbar-item @click="clearToken()">
-                Log out
-              </b-navbar-item>
+              <b-navbar-item @click="clearToken()"> Log out </b-navbar-item>
             </b-navbar-dropdown>
             <b-navbar-item tag="div" v-else>
-              <button @click="promptForToken()" class="button is-info">Log in</button>
+              <button @click="promptForToken()" class="button is-info">
+                Log in
+              </button>
             </b-navbar-item>
           </template>
         </b-navbar>
@@ -52,17 +65,14 @@ function promptForToken() {
         <router-view />
       </main>
     </section>
-    <section class="section" v-else>
+    <section class="section" v-else-if="state === 'ready'">
       <main>
         <div class="columns">
           <div class="column is-one-third"></div>
           <div class="column is-one-third">
-          <b-message 
-            title="No Token!"
-            type="is-danger" 
-            has-icon>
+            <b-message title="No Token!" type="is-danger" has-icon>
               Cannot do much without a token. Please to configure.
-          </b-message>
+            </b-message>
           </div>
         </div>
       </main>

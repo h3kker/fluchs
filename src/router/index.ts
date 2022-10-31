@@ -1,6 +1,10 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 import HomeView from "../views/HomeView.vue";
+import CategoryView from "../views/CategoryView.vue";
+
+import { pinia } from "../main";
+import { useFeedsStore } from "../stores/feeds";
 
 Vue.use(VueRouter);
 
@@ -13,7 +17,26 @@ const router = new VueRouter({
             name: "home",
             component: HomeView,
         },
+        {
+            path: "/cat/:id",
+            name: "cat",
+            component: CategoryView,
+        },
     ],
+});
+router.beforeEach((to, from, next) => {
+    const feeds = useFeedsStore(pinia);
+    if (to.path === "/") {
+        next();
+    } else {
+        console.log("waiting");
+        feeds.state.subscribe((v) => {
+            if (v === "ready") {
+                console.log("done");
+                next();
+            }
+        });
+    }
 });
 
 export default router;
