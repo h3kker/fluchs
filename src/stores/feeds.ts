@@ -8,6 +8,11 @@ import { values as _values, each as _each, size as _size, filter as _filter } fr
 
 import { BehaviorSubject } from "rxjs";
 
+interface IconSpec {
+    feed_id: number;
+    icon_id: number;
+};
+
 export interface Feed {
     id: number;
     user_id: number;
@@ -31,7 +36,7 @@ export interface Feed {
     ignore_http_cache: boolean;
     fetch_via_proxy: boolean;
     category: Category;
-    icon: any;
+    icon: IconSpec;
     read: number;
     unread: number;
 }
@@ -46,6 +51,9 @@ export const useFeedsStore = defineStore({
     }),
     getters: {
         feeds: (state) => _values(state._feeds),
+        getFeedById: (state) => {
+            return (id: number) => state._feeds[id];
+        },
     },
     actions: {
         async getFeeds(refresh = false): Promise<Feed[]> {
@@ -64,16 +72,20 @@ export const useFeedsStore = defineStore({
                         this._feeds[f.id] = f;
                     });
                 })
+                .then(() => {
+                    return cats.getCategories();
+                })
+                .then((cats) => {
+                    cats.forEach((cat) => {
+                        cat.feeds = _filter(this._feeds, (f) => f.category.id === cat.id);
+                    });
+                    this.state.next("ready");
+                })
                 .catch((e) => {
+                    this.state.next("error");
                     root.showError(e);
                 });
 
-            cats.getCategories().then((cats) => {
-                cats.forEach((cat) => {
-                    cat.feeds = _filter(this._feeds, (f) => f.category.id === cat.id);
-                });
-                this.state.next("ready");
-            });
             return this.feeds;
         },
         async getFeedCounters() {

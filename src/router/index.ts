@@ -1,7 +1,8 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import HomeView from "../views/HomeView.vue";
-import CategoryView from "../views/CategoryView.vue";
+import HomeView from "@/views/HomeView.vue";
+import CategoryView from "@/views/CategoryView.vue";
+import CategoryEntriesView from "@/views/CategoryEntriesView.vue";
 
 import { pinia } from "../main";
 import { useFeedsStore } from "../stores/feeds";
@@ -21,6 +22,11 @@ const router = new VueRouter({
             path: "/cat/:id",
             name: "cat",
             component: CategoryView,
+        },
+        {
+            path: "/cat/:catId/feeds/:id/entries",
+            name: "cat-entries",
+            component: CategoryEntriesView,
         },
     ],
 });

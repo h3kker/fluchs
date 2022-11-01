@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import axios, { AxiosError } from "axios";
 import { SnackbarProgrammatic as Snackbar } from "buefy";
+import { BehaviorSubject } from 'rxjs';
 import router from "@/router";
 
 interface User {
@@ -34,20 +35,20 @@ export const useRootStore = defineStore({
         backend: axios.create({ baseURL: "https://fluchs.testha.se" }),
         user: {} as User,
         isLoggedIn: false,
-        state: 'init' as rootState,
+        state: new BehaviorSubject<rootState>('init'),
     }),
     actions: {
         async getUserProfile() {
-            this.state = 'checking';
+            this.state.next('checking');
             this.user = await this.backend
                 .get("/v1/me")
                 .then((r) => {
                     this.isLoggedIn = true;
-                    this.state = 'ready';
+                    this.state.next('ready');
                     return r.data;
                 })
                 .catch((e) => {
-                    this.state = 'ready';
+                    this.state.next('ready');
                     this.showError(e);
                 });
         },
@@ -64,7 +65,7 @@ export const useRootStore = defineStore({
             console.error(e);
             if (e instanceof AxiosError && e.response?.status === 401) {
                 this.isLoggedIn = false;
-                router.push("/");
+                return router.push("/");
             }
             Snackbar.open({
                 type: "is-danger",

@@ -2,13 +2,13 @@
 import { useRootStore } from "./stores/root";
 import { useFeedsStore } from "./stores/feeds";
 import { storeToRefs } from "pinia";
-import { computed } from "vue";
+import { ref } from "vue";
 import { DialogProgrammatic as Dialog } from "buefy";
 
 const rootStore = useRootStore();
 const feedsStore = useFeedsStore();
 
-const { user, isLoggedIn, state } = storeToRefs(rootStore);
+const { user, isLoggedIn } = storeToRefs(rootStore);
 const { getUserProfile, registerToken, clearToken } = rootStore;
 const { getFeeds, getFeedCounters } = feedsStore;
 
@@ -18,9 +18,10 @@ getUserProfile().then(() => {
   });
 });
 
-const isLoading = computed(() => {
-  return state.value === 'checking';
-})
+const isLoading = ref(true);
+rootStore.state.subscribe(
+  v => isLoading.value = v === 'checking'
+);
 
 function promptForToken() {
   Dialog.prompt({
@@ -65,7 +66,7 @@ function promptForToken() {
         <router-view />
       </main>
     </section>
-    <section class="section" v-else-if="state === 'ready'">
+    <section class="section" v-else-if="!isLoading">
       <main>
         <div class="columns">
           <div class="column is-one-third"></div>

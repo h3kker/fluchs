@@ -8,11 +8,13 @@ import "@mdi/font/css/materialdesignicons.css";
 import App from "./App.vue";
 import router from "./router";
 
-import { pluralize } from "./util/pretty";
+import { pluralize, prettyDateTime, dateAgo } from "./util/pretty";
 
 Vue.use(PiniaVuePlugin);
 Vue.use(Buefy);
 Vue.filter("pluralize", pluralize);
+Vue.filter("prettyDateTime", prettyDateTime);
+Vue.filter("dateAgo", dateAgo);
 
 export const pinia = createPinia();
 
