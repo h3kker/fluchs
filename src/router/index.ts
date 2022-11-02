@@ -25,6 +25,11 @@ const router = new VueRouter({
         },
         {
             path: "/cat/:catId/feeds/:id/entries",
+            name: "cat-feed-entries",
+            component: CategoryEntriesView,
+        },
+        {
+            path: "/cat/:catId/entries",
             name: "cat-entries",
             component: CategoryEntriesView,
         },

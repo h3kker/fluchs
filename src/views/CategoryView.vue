@@ -10,10 +10,7 @@ const route = useRoute();
 const cat = categoriesStore.getCategoryById(parseInt(route.params.id));
 
 const sortedFeeds = computed(() => {
-  if (cat === undefined) {
-    return [];
-  }
-  return _orderBy(cat.feeds, "unread", "desc");
+  return _orderBy(cat?.feeds, "unread", "desc");
 });
 </script>
 <template>
@@ -25,31 +22,69 @@ const sortedFeeds = computed(() => {
       </b-breadcrumb>
     </div>
     <div class="columns is-multiline">
-      <div class="column is-one-third" v-for="feed in sortedFeeds" :key="feed.id">
-        <router-link :to="{ name: 'cat-entries', params: { catId: cat.id, id: feed.id } }">
-          <div class="card">
+      <div class="column is-one-third">
+        <div class="card">
+          <router-link :to="{ name: 'cat-entries', params: { catId: cat.id } }">
             <header class="card-header">
               <div class="card-header-title level">
                 <div class="level-left">
-                  <div class="level-item">{{ feed.title }}</div>
+                  <div class="level-item">All</div>
                 </div>
                 <div class="level-right">
                   <div class="level-item">
-                    <b-tag :type="feed.unread > 0 ? 'is-primary' : ''">{{ feed.unread }}</b-tag>
+                    <b-tag :type="cat.total_unread > 0 ? 'is-primary' : ''">{{ cat.total_unread }}</b-tag>
                   </div>
                 </div>
               </div>
             </header>
+          </router-link>
+          <div class="card-content">
+            <div class="content">
+              <p>
+                {{ cat.unread_feeds }} unread feeds
+              </p>
+            </div>
+          </div>
+          <footer class="card-footer">
+            <div class="card-footer-item">
+              <a>
+                <b-icon icon="check-all"></b-icon>
+              </a>
+            </div>
+          </footer>
+        </div>
+      </div>
+      <div class="column is-one-third" v-for="feed in sortedFeeds" :key="feed.id">
+          <div class="card">
+            <router-link :to="{ name: 'cat-feed-entries', params: { catId: cat.id, id: feed.id } }">
+              <header class="card-header">
+                <div class="card-header-title level">
+                  <div class="level-left">
+                    <div class="level-item">{{ feed.title }}</div>
+                  </div>
+                  <div class="level-right">
+                    <div class="level-item">
+                      <b-tag :type="feed.unread > 0 ? 'is-primary' : ''">{{ feed.unread }}</b-tag>
+                    </div>
+                  </div>
+                </div>
+              </header>
+            </router-link>
             <div class="card-content">
               <div class="content">
                 <p>
-                  last modified {{ feed.last_modified_header | dateAgo() }}<br>
                   last checked {{ feed.checked_at | dateAgo() }}
                 </p>
               </div>
             </div>
+            <footer class="card-footer">
+              <div class="card-footer-item">
+                <a>
+                  <b-icon icon="check-all"></b-icon>
+                </a>
+              </div>
+            </footer>
           </div>
-        </router-link>
       </div>
     </div>
   </div>
