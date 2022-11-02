@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { BehaviorSubject } from 'rxjs';
-import { map as _map } from 'lodash';
+import { map as _map, isEqual as _isEqual, cloneDeep as _cloneDeep } from 'lodash';
 
 import { useRootStore } from "./root";
 import type { Feed } from './feeds';
@@ -44,6 +44,12 @@ interface EntryFilter {
     category_id: number;
 }
 
+interface CallParams {
+    id: number;
+    type: 'category' | 'feed';
+    filter: EntryFilter;
+}
+
 export const useEntriesStore = defineStore({
     id: "entries",
     state: () => ({
@@ -57,25 +63,54 @@ export const useEntriesStore = defineStore({
         } as EntryFilter,
         state: new BehaviorSubject<entriesState>("init"),
         total: 0,
+        _prevCall: undefined as CallParams | undefined,
     }),
     actions: {
-        async getEntries(feedId: number): Promise<Entry[]> {
+        async _getEntries(id: number, type: 'feed' | 'category', force=false) {
             const root = useRootStore();
             this.state.next('loading');
+            const callParams: CallParams = {
+                id: id,
+                type: type,
+                filter: _cloneDeep(this.filter),
+            };
+            if (!force && _isEqual(this._prevCall, callParams)) {
+                this.state.next('ready');
+                return Promise.resolve(this.entries);
+            }
+            this.entries = [];
+
+            let url;
+            switch(type) {
+                case 'feed':
+                    url = `/v1/feeds/${id}/entries`;
+                    break;
+                case 'category':
+                    url = `/v1/categories/${id}/entries`;
+                    break;
+            }
             await root.backend
-                .get(`/v1/feeds/${feedId}/entries`, { params: this.filter })
+                .get(url, { params: this.filter })
                 .then((r) => {
                     this.total = r.data.total;
                     this.entries = _map(r.data.entries, e => {
                         return e;
                     });
                     this.state.next("ready");
+                    this._prevCall = callParams;
                 })
                 .catch((e) => {
                     this.state.next("error");
                     root.showError(e);
                 });
             return this.entries;
+
+        },
+        async getFeedEntries(feedId: number, force=false): Promise<Entry[]> {
+            return this._getEntries(feedId, 'feed', force);
+        },
+        async getCategoryEntries(catId: number, force=false): Promise<Entry[]> {
+            return this._getEntries(catId, 'category', force);
         },
         async markAsRead(entry: Entry): Promise<void> {
             const root = useRootStore();
