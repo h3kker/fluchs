@@ -17,7 +17,7 @@ const sortedFeeds = computed(() => {
   <div class="container" v-if="cat">
     <div class="mb-4">
       <b-breadcrumb size="is-large">
-        <b-breadcrumb-item tag="router-link" :to="{ name: 'home' }">All</b-breadcrumb-item>
+        <b-breadcrumb-item tag="router-link" :to="{ name: 'home' }">Categories</b-breadcrumb-item>
         <b-breadcrumb-item active>{{ cat.title }}</b-breadcrumb-item>
       </b-breadcrumb>
     </div>
@@ -57,10 +57,15 @@ const sortedFeeds = computed(() => {
       <div class="column is-one-third" v-for="feed in sortedFeeds" :key="feed.id">
           <div class="card">
             <router-link :to="{ name: 'cat-feed-entries', params: { catId: cat.id, id: feed.id } }">
-              <header class="card-header">
+              <header class="card-header" :class="feed.parsing_error_count > 0 ? 'has-background-warning-light': ''">
                 <div class="card-header-title level">
                   <div class="level-left">
-                    <div class="level-item">{{ feed.title }}</div>
+                    <div class="level-item">
+                      <b-tooltip v-if="feed.parsing_error_count > 0" :label="feed.parsing_error_message" multilined type="is-warning">
+                        <b-icon icon="alert-circle-outline"></b-icon>
+                      </b-tooltip>
+                      {{ feed.title }}
+                    </div>
                   </div>
                   <div class="level-right">
                     <div class="level-item">
