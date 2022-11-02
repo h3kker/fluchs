@@ -19,7 +19,7 @@ Vue.filter("dateAgo", dateAgo);
 export const pinia = createPinia();
 
 new Vue({
-    router,
     pinia,
+    router,
     render: (h) => h(App),
 }).$mount("#app");

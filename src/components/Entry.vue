@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useEntriesStore } from '../stores/entries';
+import { Waypoint } from 'vue-waypoint';
 import type { Entry } from '../stores/entries';
 
 const { entry, isOpen } = defineProps(['entry', 'isOpen']);
@@ -16,11 +17,17 @@ function openExternal() {
 function openComments() {
   window.open(entry.comments_url, '_blank');
 }
+function visibilityChanged(state: any) {
+    if (state.going === 'OUT' && state.direction === 'UP') {
+        markAsRead(entry);
+    }
+}
 </script>
 <template> 
+      <Waypoint @change="visibilityChanged">
       <div class="card mb-2">
           <header class="card-header" @click="$emit('open-entry')">
-            <div class="card-header-title level">
+            <div class="card-header-title level" :class="entry.status == 'read' ? 'has-text-grey-light' : ''">
               <div class="level-left">
                 <div class="level-item">{{ entry.title }}</div>
               </div>
@@ -58,4 +65,5 @@ function openComments() {
             </div>
           </footer>
         </div>
+    </Waypoint>
 </template>
