@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { BehaviorSubject } from 'rxjs';
-import { map as _map, isEqual as _isEqual, cloneDeep as _cloneDeep } from 'lodash';
+import { filter as _filter, map as _map, isEqual as _isEqual, cloneDeep as _cloneDeep } from 'lodash';
 
 import { useRootStore } from "./root";
 import type { Feed } from './feeds';
@@ -122,6 +122,38 @@ export const useEntriesStore = defineStore({
                 .catch((e) => {
                     root.showError(e);
                 })
+        },
+        async markEntriesAsRead(entries: Entry[]): Promise<void> {
+            const root = useRootStore();
+            const unreadEntries = _filter(entries, e => e.status === 'unread');
+            const idList = _map(unreadEntries, 'id');
+            if (idList.length === 0) {
+                return;
+            }
+            await root.backend
+                .put('/v1/entries', { entry_ids: idList, status: 'read' })
+                .then((r) => {
+                    unreadEntries.forEach(e => e.status = 'read');
+                    this._markedList = unreadEntries;
+                })
+                .catch((e) => {
+                    root.showError(e);
+                });
+        },
+        async undoMarkEntries(): Promise<void> {
+            const root = useRootStore();
+            const idList = _map(this._markedList, 'id');
+            if (idList.length === 0) {
+                return Promise.resolve();
+            }
+            await root.backend
+                .put('/v1/entries', { entry_ids: idList, status: 'unread' })
+                .then((r) => {
+                    this._markedList.forEach(e => e.status = 'unread');
+                })
+                .catch((e) => {
+                    root.showError(e);
+                });
         },
         async markAsUnread(entry: Entry): Promise<void> {
             const root = useRootStore();

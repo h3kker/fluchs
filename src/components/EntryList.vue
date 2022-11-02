@@ -4,6 +4,8 @@ import { ref } from "vue";
 import { useEntriesStore } from "../stores/entries";
 import type { Entry } from '../stores/entries';
 import ShowEntry from './Entry.vue';
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
+
 
 const emit = defineEmits(['refresh'])
 const entriesStore = useEntriesStore();
@@ -32,6 +34,24 @@ function openEntry(entry: Entry) {
     markAsRead(entry);
   }
 }
+function markPageAsRead() {
+  entriesStore.markEntriesAsRead(entries.value)
+    .then(() => {
+      const notification = Snackbar.open({
+        duration: 15000,
+        message: "Marked page as read",
+        actionText: "Undo",
+        pauseOnHover: true,
+        cancelText: "Whatever.",
+        position: 'is-bottom',
+        type: 'is-warning',
+        onAction: () => {
+          entriesStore.undoMarkEntries();
+          notification.close();
+        },
+      });
+    });
+}
 
 const currentPage = ref(calcPage(filter.value));
 
@@ -44,7 +64,7 @@ const currentPage = ref(calcPage(filter.value));
             <b-button @click="$emit('refresh', true)">
               <b-icon icon="refresh"></b-icon>
             </b-button>
-            <b-button disabled>
+            <b-button @click="markPageAsRead()">
               <b-icon icon="check"></b-icon>
             </b-button>
             <b-button disabled>
