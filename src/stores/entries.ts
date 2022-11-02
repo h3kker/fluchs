@@ -28,6 +28,7 @@ export interface Entry {
 type entriesState = "init" | "loading" | "ready" | "error";
 type entryStatus = "read" | "unread" | "removed";
 type entrySortField = "id" | "status" | "published_at" | "category_title" | "category_id";
+type fetchType = 'all' | 'category' | 'feed';
 
 interface EntryFilter {
     status: entryStatus;
@@ -46,7 +47,7 @@ interface EntryFilter {
 
 interface CallParams {
     id: number;
-    type: 'category' | 'feed';
+    type: fetchType;
     filter: EntryFilter;
 }
 
@@ -64,9 +65,10 @@ export const useEntriesStore = defineStore({
         state: new BehaviorSubject<entriesState>("init"),
         total: 0,
         _prevCall: undefined as CallParams | undefined,
+        _markedList: [] as Entry[],
     }),
     actions: {
-        async _getEntries(id: number, type: 'feed' | 'category', force=false) {
+        async _getEntries(id: number, type: fetchType, force=false) {
             const root = useRootStore();
             this.state.next('loading');
             const callParams: CallParams = {
@@ -87,6 +89,9 @@ export const useEntriesStore = defineStore({
                     break;
                 case 'category':
                     url = `/v1/categories/${id}/entries`;
+                    break;
+                case 'all':
+                    url = `/v1/entries`;
                     break;
             }
             await root.backend
@@ -111,6 +116,9 @@ export const useEntriesStore = defineStore({
         },
         async getCategoryEntries(catId: number, force=false): Promise<Entry[]> {
             return this._getEntries(catId, 'category', force);
+        },
+        async getAllEntries(force = false): Promise<Entry[]> {
+            return this._getEntries(0, 'all', force);
         },
         async markAsRead(entry: Entry): Promise<void> {
             const root = useRootStore();

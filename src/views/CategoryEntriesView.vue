@@ -42,7 +42,7 @@ refresh();
         <b-breadcrumb-item 
             tag="router-link" 
             :to="{ name: 'home' }">
-            All
+            Categories
         </b-breadcrumb-item>
         <b-breadcrumb-item 
             tag="router-link" 
