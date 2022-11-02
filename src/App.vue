@@ -19,9 +19,7 @@ getUserProfile().then(() => {
 });
 
 const isLoading = ref(true);
-rootStore.state.subscribe(
-  v => isLoading.value = v === 'checking'
-);
+rootStore.state.subscribe((v) => (isLoading.value = v === "checking"));
 
 function promptForToken() {
   Dialog.prompt({

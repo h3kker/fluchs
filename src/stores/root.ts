@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios, { AxiosError } from "axios";
 import { SnackbarProgrammatic as Snackbar } from "buefy";
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from "rxjs";
 import router from "@/router";
 
 interface User {
@@ -27,7 +27,7 @@ if (token !== "") {
     axios.defaults.headers.common["X-Auth-Token"] = token;
 }
 
-type rootState = 'init' | 'checking' | 'ready';
+type rootState = "init" | "checking" | "ready";
 
 export const useRootStore = defineStore({
     id: "root",
@@ -35,20 +35,20 @@ export const useRootStore = defineStore({
         backend: axios.create({ baseURL: "https://fluchs.testha.se" }),
         user: {} as User,
         isLoggedIn: false,
-        state: new BehaviorSubject<rootState>('init'),
+        state: new BehaviorSubject<rootState>("init"),
     }),
     actions: {
         async getUserProfile() {
-            this.state.next('checking');
+            this.state.next("checking");
             this.user = await this.backend
                 .get("/v1/me")
                 .then((r) => {
                     this.isLoggedIn = true;
-                    this.state.next('ready');
+                    this.state.next("ready");
                     return r.data;
                 })
                 .catch((e) => {
-                    this.state.next('ready');
+                    this.state.next("ready");
                     this.showError(e);
                 });
         },

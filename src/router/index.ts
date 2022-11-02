@@ -3,7 +3,7 @@ import VueRouter from "vue-router";
 import HomeView from "@/views/HomeView.vue";
 import CategoryView from "@/views/CategoryView.vue";
 import CategoryEntriesView from "@/views/CategoryEntriesView.vue";
-import AllEntriesView from '@/views/AllEntriesView.vue';
+import AllEntriesView from "@/views/AllEntriesView.vue";
 
 import { pinia } from "../main";
 import { useFeedsStore } from "../stores/feeds";

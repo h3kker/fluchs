@@ -1,9 +1,9 @@
 import { defineStore } from "pinia";
-import { BehaviorSubject } from 'rxjs';
-import { filter as _filter, map as _map, isEqual as _isEqual, cloneDeep as _cloneDeep } from 'lodash';
+import { BehaviorSubject } from "rxjs";
+import { filter as _filter, map as _map, isEqual as _isEqual, cloneDeep as _cloneDeep } from "lodash";
 
 import { useRootStore } from "./root";
-import type { Feed } from './feeds';
+import type { Feed } from "./feeds";
 
 export interface Entry {
     id: number;
@@ -23,12 +23,12 @@ export interface Entry {
     reading_time: number;
     enclosures: number;
     feed: Feed;
-};
+}
 
 type entriesState = "init" | "loading" | "ready" | "error";
 type entryStatus = "read" | "unread" | "removed";
 type entrySortField = "id" | "status" | "published_at" | "category_title" | "category_id";
-type fetchType = 'all' | 'category' | 'feed';
+type fetchType = "all" | "category" | "feed";
 
 interface EntryFilter {
     status: entryStatus;
@@ -56,9 +56,9 @@ export const useEntriesStore = defineStore({
     state: () => ({
         entries: [] as Entry[],
         filter: {
-            status: 'unread',
-            order: 'published_at',
-            direction: 'desc',
+            status: "unread",
+            order: "published_at",
+            direction: "desc",
             limit: 25,
             offset: 0,
         } as EntryFilter,
@@ -68,29 +68,29 @@ export const useEntriesStore = defineStore({
         _markedList: [] as Entry[],
     }),
     actions: {
-        async _getEntries(id: number, type: fetchType, force=false) {
+        async _getEntries(id: number, type: fetchType, force = false) {
             const root = useRootStore();
-            this.state.next('loading');
+            this.state.next("loading");
             const callParams: CallParams = {
                 id: id,
                 type: type,
                 filter: _cloneDeep(this.filter),
             };
             if (!force && _isEqual(this._prevCall, callParams)) {
-                this.state.next('ready');
+                this.state.next("ready");
                 return Promise.resolve(this.entries);
             }
             this.entries = [];
 
             let url;
-            switch(type) {
-                case 'feed':
+            switch (type) {
+                case "feed":
                     url = `/v1/feeds/${id}/entries`;
                     break;
-                case 'category':
+                case "category":
                     url = `/v1/categories/${id}/entries`;
                     break;
-                case 'all':
+                case "all":
                     url = `/v1/entries`;
                     break;
             }
@@ -98,7 +98,7 @@ export const useEntriesStore = defineStore({
                 .get(url, { params: this.filter })
                 .then((r) => {
                     this.total = r.data.total;
-                    this.entries = _map(r.data.entries, e => {
+                    this.entries = _map(r.data.entries, (e) => {
                         return e;
                     });
                     this.state.next("ready");
@@ -109,39 +109,38 @@ export const useEntriesStore = defineStore({
                     root.showError(e);
                 });
             return this.entries;
-
         },
-        async getFeedEntries(feedId: number, force=false): Promise<Entry[]> {
-            return this._getEntries(feedId, 'feed', force);
+        async getFeedEntries(feedId: number, force = false): Promise<Entry[]> {
+            return this._getEntries(feedId, "feed", force);
         },
-        async getCategoryEntries(catId: number, force=false): Promise<Entry[]> {
-            return this._getEntries(catId, 'category', force);
+        async getCategoryEntries(catId: number, force = false): Promise<Entry[]> {
+            return this._getEntries(catId, "category", force);
         },
         async getAllEntries(force = false): Promise<Entry[]> {
-            return this._getEntries(0, 'all', force);
+            return this._getEntries(0, "all", force);
         },
         async markAsRead(entry: Entry): Promise<void> {
             const root = useRootStore();
             await root.backend
-                .put('/v1/entries', { entry_ids: [ entry.id ], status: 'read' })
-                .then((r) => {
-                    entry.status = 'read';
+                .put("/v1/entries", { entry_ids: [entry.id], status: "read" })
+                .then(() => {
+                    entry.status = "read";
                 })
                 .catch((e) => {
                     root.showError(e);
-                })
+                });
         },
         async markEntriesAsRead(entries: Entry[]): Promise<void> {
             const root = useRootStore();
-            const unreadEntries = _filter(entries, e => e.status === 'unread');
-            const idList = _map(unreadEntries, 'id');
+            const unreadEntries = _filter(entries, (e) => e.status === "unread");
+            const idList = _map(unreadEntries, "id");
             if (idList.length === 0) {
                 return;
             }
             await root.backend
-                .put('/v1/entries', { entry_ids: idList, status: 'read' })
-                .then((r) => {
-                    unreadEntries.forEach(e => e.status = 'read');
+                .put("/v1/entries", { entry_ids: idList, status: "read" })
+                .then(() => {
+                    unreadEntries.forEach((e) => (e.status = "read"));
                     this._markedList = unreadEntries;
                 })
                 .catch((e) => {
@@ -150,14 +149,14 @@ export const useEntriesStore = defineStore({
         },
         async undoMarkEntries(): Promise<void> {
             const root = useRootStore();
-            const idList = _map(this._markedList, 'id');
+            const idList = _map(this._markedList, "id");
             if (idList.length === 0) {
                 return Promise.resolve();
             }
             await root.backend
-                .put('/v1/entries', { entry_ids: idList, status: 'unread' })
-                .then((r) => {
-                    this._markedList.forEach(e => e.status = 'unread');
+                .put("/v1/entries", { entry_ids: idList, status: "unread" })
+                .then(() => {
+                    this._markedList.forEach((e) => (e.status = "unread"));
                 })
                 .catch((e) => {
                     root.showError(e);
@@ -166,24 +165,24 @@ export const useEntriesStore = defineStore({
         async markAsUnread(entry: Entry): Promise<void> {
             const root = useRootStore();
             await root.backend
-                .put('/v1/entries', { entry_ids: [ entry.id ], status: 'unread' })
-                .then((r) => {
-                    entry.status = 'unread';
+                .put("/v1/entries", { entry_ids: [entry.id], status: "unread" })
+                .then(() => {
+                    entry.status = "unread";
                 })
                 .catch((e) => {
                     root.showError(e);
-                })
+                });
         },
         async toggleStar(entry: Entry): Promise<void> {
             const root = useRootStore();
             await root.backend
                 .put(`/v1/entries/${entry.id}/bookmark`)
-                .then((r) => {
+                .then(() => {
                     entry.starred = !entry.starred;
                 })
                 .catch((e) => {
                     root.showError(e);
-                })
+                });
         },
     },
 });

@@ -11,7 +11,7 @@ import { BehaviorSubject } from "rxjs";
 interface IconSpec {
     feed_id: number;
     icon_id: number;
-};
+}
 
 export interface Feed {
     id: number;
@@ -105,10 +105,10 @@ export const useFeedsStore = defineStore({
                     return ret;
                 })
                 .then((feed) => {
-                    cats.getCategories().then(cats => {
-                        const feedCat = _find(cats, c => c.id === feed.category.id);
+                    cats.getCategories().then((cats) => {
+                        const feedCat = _find(cats, (c) => c.id === feed.category.id);
                         if (feedCat) {
-                            feedCat.feeds = _map(feedCat?.feeds, f => f.id === feed.id ? feed : f);
+                            feedCat.feeds = _map(feedCat?.feeds, (f) => (f.id === feed.id ? feed : f));
                         }
                     });
                 })
