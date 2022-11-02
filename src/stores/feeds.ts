@@ -4,7 +4,7 @@ import { useRootStore } from "./root";
 import type { Category } from "./categories";
 import { useCategoriesStore } from "./categories";
 
-import { values as _values, each as _each, size as _size, filter as _filter } from "lodash";
+import { values as _values, each as _each, size as _size, filter as _filter, find as _find, map as _map } from "lodash";
 
 import { BehaviorSubject } from "rxjs";
 
@@ -87,6 +87,54 @@ export const useFeedsStore = defineStore({
                 });
 
             return this.feeds;
+        },
+        async getFeed(id: number): Promise<Feed | undefined> {
+            const root = useRootStore();
+            const cats = useCategoriesStore();
+            let ret: Feed | undefined = undefined;
+            await root.backend
+                .get(`/v1/feeds/${id}`)
+                .then((r) => {
+                    ret = r.data as Feed;
+                    const oldFeed = this._feeds[id];
+                    if (oldFeed) {
+                        ret.unread = oldFeed.unread;
+                        ret.read = oldFeed.read;
+                    }
+                    this._feeds[ret.id] = ret;
+                    return ret;
+                })
+                .then((feed) => {
+                    cats.getCategories().then(cats => {
+                        const feedCat = _find(cats, c => c.id === feed.category.id);
+                        if (feedCat) {
+                            feedCat.feeds = _map(feedCat?.feeds, f => f.id === feed.id ? feed : f);
+                        }
+                    });
+                })
+                .then(() => {
+                    return this.getFeedCounters();
+                })
+                .catch((e) => {
+                    root.showError(e);
+                });
+            return ret;
+        },
+        async refresh(feed: Feed): Promise<Feed> {
+            const root = useRootStore();
+            let ret = feed;
+            await root.backend
+                .put(`/v1/feeds/${feed.id}/refresh`)
+                .then(() => {
+                    return this.getFeed(feed.id);
+                })
+                .then((upd) => {
+                    if (upd) ret = upd;
+                })
+                .catch((e) => {
+                    root.showError(e);
+                });
+            return ret;
         },
         async getFeedCounters() {
             const root = useRootStore();

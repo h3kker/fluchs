@@ -3,8 +3,12 @@ import { useCategoriesStore } from "../stores/categories";
 import { useRoute } from "vue-router/composables";
 import { computed } from "vue";
 import { orderBy as _orderBy } from "lodash";
+import { useFeedsStore } from "../stores/feeds";
+import type { Feed } from '../stores/feeds';
+import { ToastProgrammatic as Toast } from 'buefy'
 
 const categoriesStore = useCategoriesStore();
+const feedsStore = useFeedsStore();
 const route = useRoute();
 
 const cat = categoriesStore.getCategoryById(parseInt(route.params.id));
@@ -12,6 +16,27 @@ const cat = categoriesStore.getCategoryById(parseInt(route.params.id));
 const sortedFeeds = computed(() => {
   return _orderBy(cat?.feeds, "unread", "desc");
 });
+function refresh(feed: Feed) {
+  feedsStore.refresh(feed)
+    .then(feed => {
+      if (feed.parsing_error_count === 0) {
+        Toast.open({
+          message: "Feed refreshed",
+          type: "is-success",
+          position: "is-bottom",
+        });
+      }
+      else {
+        Toast.open({
+          message: `Feed still bad: ${feed.parsing_error_message}`,
+          type: "is-warning",
+          position: "is-bottom",
+          duration: 15000,
+          pauseOnHover: true,
+        });
+      }
+    });
+}
 </script>
 <template>
   <div class="container" v-if="cat">
@@ -86,6 +111,11 @@ const sortedFeeds = computed(() => {
               <div class="card-footer-item">
                 <a>
                   <b-icon icon="check-all"></b-icon>
+                </a>
+              </div>
+              <div class="card-footer-item">
+                <a @click="refresh(feed)">
+                  <b-icon icon="refresh"></b-icon>
                 </a>
               </div>
             </footer>
