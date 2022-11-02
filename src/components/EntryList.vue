@@ -64,7 +64,7 @@ const currentPage = ref(calcPage(filter.value));
             <b-button @click="$emit('refresh', true)">
               <b-icon icon="refresh"></b-icon>
             </b-button>
-            <b-button @click="markPageAsRead()">
+            <b-button @click="markPageAsRead()" disabled="entries.length === 0">
               <b-icon icon="check"></b-icon>
             </b-button>
             <b-button disabled>
@@ -85,6 +85,12 @@ const currentPage = ref(calcPage(filter.value));
       <div v-for="entry in entries" :key="entry.id">
         <ShowEntry :entry="entry" :is-open="isOpen" @open-entry="openEntry(entry)"></ShowEntry>
       </div>
+      <b-message v-if="entries.length === 0"
+        title="Nothing to see here."
+        has-icon
+        type="is-info">
+          Those lazy people did not write anything new. 
+      </b-message>
       <b-pagination
         @change="onPage(true)"
         :total="total"
