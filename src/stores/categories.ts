@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { each as _each, map as _map } from "lodash";
 
 import { useRootStore } from "./root";
-import type { Feed } from "./feeds";
+import { useFeedsStore, type Feed } from "./feeds";
 
 export interface Category {
     title: string;
@@ -61,5 +61,15 @@ export const useCategoriesStore = defineStore({
         resetCounters() {
             this.categories.forEach(resetCatCounter);
         },
+        async markAsRead(cat: Category) {
+            const root = useRootStore();
+            const feeds = useFeedsStore();
+            await root.backend
+                .put(`/v1/categories/${cat.id}/mark-all-as-read`)
+                .then(() => {
+                    feeds.getFeedCounters();
+                })
+                .catch((e) => root.showError(e));
+        }
     },
 });
