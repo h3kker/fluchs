@@ -3,7 +3,8 @@ import { BehaviorSubject } from "rxjs";
 import { filter as _filter, map as _map, isEqual as _isEqual, cloneDeep as _cloneDeep } from "lodash";
 
 import { useRootStore } from "./root";
-import type { Feed } from "./feeds";
+import { useFeedsStore, type Feed } from "./feeds";
+import { useCategoriesStore } from "./categories";
 
 export interface Entry {
     id: number;
@@ -130,10 +131,14 @@ export const useEntriesStore = defineStore({
         },
         async markAsRead(entry: Entry): Promise<void> {
             const root = useRootStore();
+            if (entry.status === 'read') {
+                return;
+            }
             await root.backend
                 .put("/v1/entries", { entry_ids: [entry.id], status: "read" })
                 .then(() => {
                     entry.status = "read";
+                    this._updateReadCounters(entry, 1);
                 })
                 .catch((e) => {
                     root.showError(e);
@@ -141,6 +146,7 @@ export const useEntriesStore = defineStore({
         },
         async markEntriesAsRead(entries: Entry[]): Promise<void> {
             const root = useRootStore();
+            const feeds = useFeedsStore();
             const unreadEntries = _filter(entries, (e) => e.status === "unread");
             const idList = _map(unreadEntries, "id");
             if (idList.length === 0) {
@@ -151,6 +157,7 @@ export const useEntriesStore = defineStore({
                 .then(() => {
                     unreadEntries.forEach((e) => (e.status = "read"));
                     this._markedList = unreadEntries;
+                    feeds.getFeedCounters();
                 })
                 .catch((e) => {
                     root.showError(e);
@@ -158,6 +165,7 @@ export const useEntriesStore = defineStore({
         },
         async undoMarkEntries(): Promise<void> {
             const root = useRootStore();
+            const feeds = useFeedsStore();
             const idList = _map(this._markedList, "id");
             if (idList.length === 0) {
                 return Promise.resolve();
@@ -166,6 +174,7 @@ export const useEntriesStore = defineStore({
                 .put("/v1/entries", { entry_ids: idList, status: "unread" })
                 .then(() => {
                     this._markedList.forEach((e) => (e.status = "unread"));
+                    feeds.getFeedCounters();
                 })
                 .catch((e) => {
                     root.showError(e);
@@ -173,10 +182,14 @@ export const useEntriesStore = defineStore({
         },
         async markAsUnread(entry: Entry): Promise<void> {
             const root = useRootStore();
+            if (entry.status === 'unread') {
+                return;
+            }
             await root.backend
                 .put("/v1/entries", { entry_ids: [entry.id], status: "unread" })
                 .then(() => {
                     entry.status = "unread";
+                    this._updateReadCounters(entry, -1);
                 })
                 .catch((e) => {
                     root.showError(e);
@@ -193,5 +206,17 @@ export const useEntriesStore = defineStore({
                     root.showError(e);
                 });
         },
+        _updateReadCounters(entry: Entry, count: number) {
+            const feeds = useFeedsStore();
+            const cats = useCategoriesStore();
+            const feed = feeds.getFeedById(entry.feed_id);
+            feed.unread -= count;
+            feed.read += count;
+            const cat = cats.getCategoryById(feed.category.id);
+            if (cat) {
+                cat.total_read += count;
+                cat.total_unread -= count;
+            }
+        }
     },
 });
