@@ -28,25 +28,26 @@ export interface Entry {
 type entriesState = "init" | "loading" | "ready" | "error";
 type entryStatus = "read" | "unread" | "removed";
 type entrySortField = "id" | "status" | "published_at" | "category_title" | "category_id";
-type fetchType = "all" | "category" | "feed";
+type fetchType = "all" | "category" | "feed" | "starred";
 
 interface EntryFilter {
-    status: entryStatus;
-    offset: number;
-    limit: number;
-    order: entrySortField;
-    direction: "asc" | "desc";
-    before: number;
-    after: number;
-    before_entry_id: number;
-    after_entry_id: number;
-    starred: boolean;
-    search: string;
-    category_id: number;
+    status?: entryStatus;
+    offset?: number;
+    limit?: number;
+    order?: entrySortField;
+    direction?: "asc" | "desc";
+    before?: number;
+    after?: number;
+    before_entry_id?: number;
+    after_entry_id?: number;
+    starred?: boolean;
+    search?: string;
+    category_id?: number;
 }
 
 interface CallParams {
     id: number;
+    url: string;
     type: fetchType;
     filter: EntryFilter;
 }
@@ -73,29 +74,34 @@ export const useEntriesStore = defineStore({
             this.state.next("loading");
             const callParams: CallParams = {
                 id: id,
+                url: '',
                 type: type,
                 filter: _cloneDeep(this.filter),
             };
+
+            switch (type) {
+                case "feed":
+                    callParams.url = `/v1/feeds/${id}/entries`;
+                    break;
+                case "category":
+                    callParams.url = `/v1/categories/${id}/entries`;
+                    break;
+                case "all":
+                    callParams.url = `/v1/entries`;
+                    break;
+                case "starred":
+                    callParams.url = `/v1/entries`;
+                    delete callParams.filter.status;
+                    callParams.filter.starred = true;
+                    break;
+            }
             if (!force && _isEqual(this._prevCall, callParams)) {
                 this.state.next("ready");
                 return Promise.resolve(this.entries);
             }
             this.entries = [];
-
-            let url;
-            switch (type) {
-                case "feed":
-                    url = `/v1/feeds/${id}/entries`;
-                    break;
-                case "category":
-                    url = `/v1/categories/${id}/entries`;
-                    break;
-                case "all":
-                    url = `/v1/entries`;
-                    break;
-            }
             await root.backend
-                .get(url, { params: this.filter })
+                .get(callParams.url, { params: callParams.filter })
                 .then((r) => {
                     this.total = r.data.total;
                     this.entries = _map(r.data.entries, (e) => {
@@ -118,6 +124,9 @@ export const useEntriesStore = defineStore({
         },
         async getAllEntries(force = false): Promise<Entry[]> {
             return this._getEntries(0, "all", force);
+        },
+        async getStarredEntries(force = false): Promise<Entry[]> {
+            return this._getEntries(0, "starred", force);
         },
         async markAsRead(entry: Entry): Promise<void> {
             const root = useRootStore();

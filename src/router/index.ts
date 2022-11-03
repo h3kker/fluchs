@@ -4,6 +4,7 @@ import HomeView from "@/views/HomeView.vue";
 import CategoryView from "@/views/CategoryView.vue";
 import CategoryEntriesView from "@/views/CategoryEntriesView.vue";
 import AllEntriesView from "@/views/AllEntriesView.vue";
+import StarredEntriesView from "@/views/StarredEntries.vue";
 
 import { pinia } from "../main";
 import { useFeedsStore } from "../stores/feeds";
@@ -39,13 +40,18 @@ const router = new VueRouter({
             name: "all-entries",
             component: AllEntriesView,
         },
+        {
+            path: "/starred",
+            name: "starred-entries",
+            component: StarredEntriesView,
+        },
     ],
 });
 router.beforeEach((to, from, next) => {
-    const feeds = useFeedsStore(pinia);
     if (to.path === "/") {
         next();
     } else {
+        const feeds = useFeedsStore(pinia);
         console.log("waiting");
         feeds.state.subscribe((v) => {
             if (v === "ready") {

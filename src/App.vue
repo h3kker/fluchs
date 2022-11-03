@@ -46,6 +46,11 @@ function promptForToken() {
               Fluchshase!
             </b-navbar-item>
           </template>
+          <template #start>
+            <b-navbar-item tag="router-link" :to="{ name: 'starred-entries' }">
+              <b-icon icon="star"></b-icon>
+            </b-navbar-item>
+          </template>
           <template #end>
             <b-navbar-dropdown :label="user.username" v-if="isLoggedIn">
               <b-navbar-item @click="clearToken()"> Log out </b-navbar-item>
