@@ -108,7 +108,7 @@ export const useFeedsStore = defineStore({
                     cats.getCategories().then((cats) => {
                         const feedCat = _find(cats, (c) => c.id === feed.category.id);
                         if (feedCat) {
-                            feedCat.feeds = _map(feedCat?.feeds, (f) => (f.id === feed.id ? feed : f));
+                            feedCat.feeds = _map(feedCat.feeds, (f) => (f.id === feed.id ? feed : f));
                         }
                     });
                 })
@@ -142,16 +142,23 @@ export const useFeedsStore = defineStore({
             await root.backend
                 .get("/v1/feeds/counters")
                 .then((r) => {
-                    _each(r.data.reads, (v: number, k: number) => {
-                        this._feeds[k].read = v;
-                    });
-                    _each(r.data.unreads, (v: number, k: number) => {
-                        this._feeds[k].unread = v;
+                    _each(this._feeds, f => {
+                        f.read = r.data.reads[f.id] || 0;
+                        f.unread = r.data.unreads[f.id] || 0;
                     });
                 })
                 .catch((e) => root.showError(e));
 
             cats.resetCounters();
+        },
+        async markAsRead(feed: Feed) {
+            const root = useRootStore();
+            await root.backend
+                .put(`/v1/feeds/${feed.id}/mark-all-as-read`)
+                .then(() => {
+                    this.getFeedCounters();
+                })
+                .catch((e) => root.showError(e));
         },
     },
 });
