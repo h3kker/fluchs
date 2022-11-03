@@ -32,7 +32,7 @@ type entrySortField = "id" | "status" | "published_at" | "category_title" | "cat
 type fetchType = "all" | "category" | "feed" | "starred";
 
 interface EntryFilter {
-    status?: entryStatus;
+    status?: entryStatus | entryStatus[];
     offset?: number;
     limit?: number;
     order?: entrySortField;
@@ -95,6 +95,9 @@ export const useEntriesStore = defineStore({
                     delete callParams.filter.status;
                     callParams.filter.starred = true;
                     break;
+            }
+            if (callParams.filter.status === 'read') {
+                callParams.filter.status = ['unread', 'read'];
             }
             if (!force && _isEqual(this._prevCall, callParams)) {
                 this.state.next("ready");

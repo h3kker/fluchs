@@ -18,7 +18,7 @@ function onPage(scrollTop = false) {
     document.getElementById("top")?.scrollIntoView({ behavior: "smooth" });
   }
 }
-function calcPage(filter: { offset: number; limit: number }): number {
+function calcPage(filter: { offset?: number; limit?: number }): number {
   return filter && filter.offset && filter.limit
     ? Math.floor(filter.offset / filter.limit) + 1
     : 1;
@@ -51,6 +51,14 @@ function markPageAsRead() {
 }
 
 const currentPage = ref(calcPage(filter.value));
+
+const showAll = ref(filter.value.status === 'read');
+function toggleAll(v: boolean) {
+  filter.value.status = v ? 'read' : 'unread';
+  console.log(filter.value.status);
+  emit('refresh');
+}
+
 </script>
 <template>
   <div>
@@ -69,11 +77,12 @@ const currentPage = ref(calcPage(filter.value));
         </div>
       </div>
       <div class="column">
-        <b-field>
+        <b-field grouped>
           <b-select placeholder="Sort order" v-model="filter.direction" :on-change="$emit('refresh')">
             <option value="asc">Oldest first</option>
             <option value="desc">Newest first</option>
           </b-select>
+          <b-switch v-model="showAll" @input="(v) => toggleAll(v)">Show All</b-switch>
         </b-field>
       </div>
       <div class="column">
