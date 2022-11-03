@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useRootStore } from "./stores/root";
 import { useFeedsStore } from "./stores/feeds";
+import { useRouter } from "vue-router/composables";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import { DialogProgrammatic as Dialog } from "buefy";
 
+const router = useRouter();
 const rootStore = useRootStore();
 const feedsStore = useFeedsStore();
 
@@ -33,6 +35,14 @@ function promptForToken() {
     },
   });
 }
+
+const searchText = ref('');
+function search() {
+  router.push({
+    name: 'all-entries',
+    query: { q: searchText.value }
+  });
+}
 </script>
 
 <template>
@@ -49,6 +59,16 @@ function promptForToken() {
           <template #start>
             <b-navbar-item tag="router-link" :to="{ name: 'starred-entries' }">
               <b-icon icon="star"></b-icon>
+            </b-navbar-item>
+            <b-navbar-item>
+              <b-input placeholder="Search..."
+                type="search"
+                v-model="searchText"
+                icon="text-search"
+                @icon-click="search()"
+                @keyup.enter.native="search()"
+                icon-clickable>
+              </b-input>
             </b-navbar-item>
           </template>
           <template #end>

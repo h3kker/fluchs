@@ -52,10 +52,8 @@ router.beforeEach((to, from, next) => {
         next();
     } else {
         const feeds = useFeedsStore(pinia);
-        console.log("waiting");
         feeds.state.subscribe((v) => {
             if (v === "ready") {
-                console.log("done");
                 next();
             }
         });

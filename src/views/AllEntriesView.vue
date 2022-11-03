@@ -1,9 +1,31 @@
 <script setup lang="ts">
 import { useEntriesStore } from "../stores/entries";
 import EntryList from "../components/EntryList.vue";
-import { ref } from "vue";
+import { ref, onUnmounted } from "vue";
+import { useRoute, onBeforeRouteUpdate } from "vue-router/composables";
+import { storeToRefs } from "pinia";
+import { isArray } from "lodash";
+
+const route = useRoute();
 
 const entriesStore = useEntriesStore();
+const { filter } = storeToRefs(entriesStore);
+
+onUnmounted(() => {
+  delete filter.value.search;
+});
+onBeforeRouteUpdate((to, from, next) => {
+  if (to.query.q) {
+    filter.value.search = isArray(to.query.q) ? to.query.q[0] || undefined : to.query.q;
+    refresh();
+  }
+  else {
+    delete filter.value.search;
+    refresh();
+  }
+  next();
+});
+refresh();
 
 function refresh(force = false) {
   entriesStore.getAllEntries(force);
@@ -15,7 +37,6 @@ entriesStore.state.subscribe((v) => {
   isLoading.value = v === "loading";
   curState.value = v;
 });
-refresh();
 </script>
 <template>
   <div class="container">
