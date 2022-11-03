@@ -55,7 +55,6 @@ const currentPage = ref(calcPage(filter.value));
 const showAll = ref(filter.value.status === 'read');
 function toggleAll(v: boolean) {
   filter.value.status = v ? 'read' : 'unread';
-  console.log(filter.value.status);
   emit('refresh');
 }
 
@@ -110,11 +109,19 @@ function toggleAll(v: boolean) {
     >
       Those lazy people did not write anything new.
     </b-message>
-    <b-pagination class="mt-4"
-      @change="onPage(true)"
-      :total="total"
-      v-model="currentPage"
-      :per-page="filter.limit"
-    ></b-pagination>
+    <div class="columns">
+      <div class="column">
+        <b-button @click="markPageAsRead()" :disabled="entries.length === 0">
+          <b-icon icon="check"></b-icon>
+        </b-button>
+      </div>
+      <div class="column">
+        <b-pagination class="mt-4"
+          @change="onPage(true)"
+          :total="total"
+          v-model="currentPage"
+          :per-page="filter.limit"></b-pagination>
+      </div>
+    </div>
   </div>
 </template>

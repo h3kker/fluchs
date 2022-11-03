@@ -48,6 +48,7 @@ export const useFeedsStore = defineStore({
     state: () => ({
         _feeds: {} as { [key: number]: Feed },
         state: new BehaviorSubject<feedsState>("init"),
+        icons: {} as { [key: number]: string },
     }),
     getters: {
         feeds: (state) => _values(state._feeds),
@@ -160,5 +161,18 @@ export const useFeedsStore = defineStore({
                 })
                 .catch((e) => root.showError(e));
         },
+        async getIcon(feed: Feed): Promise<string> {
+            const root = useRootStore();
+            if (!(feed.id in this.icons)) {
+                await root.backend
+                    .get(`/v1/feeds/${feed.id}/icon`)
+                    .then((r) => {
+                        this.icons[feed.id] = r.data.data;
+                        return r.data.data;
+                    })
+                    .catch((e) => root.showError(e));
+                }
+            return this.icons[feed.id];
+        }
     },
 });

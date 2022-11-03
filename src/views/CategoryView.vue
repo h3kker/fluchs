@@ -2,9 +2,10 @@
 import { useCategoriesStore } from "../stores/categories";
 import { useRoute } from "vue-router/composables";
 import { computed } from "vue";
-import { orderBy as _orderBy } from "lodash";
+import { orderBy as _orderBy, each as _each } from "lodash";
 import { useFeedsStore } from "../stores/feeds";
 import type { Feed } from "../stores/feeds";
+import FeedIcon from '../components/FeedIcon.vue';
 import { ToastProgrammatic as Toast } from "buefy";
 import { DialogProgrammatic as Dialog } from 'buefy'
 
@@ -121,6 +122,7 @@ function markFeedAsRead(feed: Feed) {
                       type="is-warning">
                       <b-icon icon="alert-circle-outline"></b-icon>
                     </b-tooltip>
+                    <FeedIcon :feed="feed"/>
                     {{ feed.title }}
                   </div>
                   <div>
@@ -158,4 +160,3 @@ function markFeedAsRead(feed: Feed) {
     </b-message>
   </div>
 </template>
-<style></style>

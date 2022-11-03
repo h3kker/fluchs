@@ -15,9 +15,9 @@ const { getUserProfile, registerToken, clearToken } = rootStore;
 const { getFeeds, getFeedCounters } = feedsStore;
 
 getUserProfile().then(() => {
-  getFeeds().then(() => {
-    getFeedCounters();
-  });
+  return getFeeds();
+}).then(() => {
+  getFeedCounters();
 });
 
 const isLoading = ref(true);
