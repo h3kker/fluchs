@@ -15,17 +15,21 @@ onUnmounted(() => {
   delete filter.value.search;
 });
 onBeforeRouteUpdate((to, from, next) => {
-  if (to.query.q) {
-    filter.value.search = isArray(to.query.q) ? to.query.q[0] || undefined : to.query.q;
+  setSearch(to.query.q);
+  next();
+});
+setSearch(route.query.q);
+
+function setSearch(q: string | (string | null)[]) {
+  if (q) {
+    filter.value.search = isArray(q) ? q[0] || undefined : q;
     refresh();
   }
   else {
     delete filter.value.search;
     refresh();
   }
-  next();
-});
-refresh();
+}
 
 function refresh(force = false) {
   entriesStore.getAllEntries(force);
