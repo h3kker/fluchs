@@ -60,13 +60,21 @@ const currentPage = ref(calcPage(filter.value));
           <b-button @click="$emit('refresh', true)">
             <b-icon icon="refresh"></b-icon>
           </b-button>
-          <b-button @click="markPageAsRead()" disabled="entries.length === 0">
+          <b-button @click="markPageAsRead()" :disabled="entries.length === 0">
             <b-icon icon="check"></b-icon>
           </b-button>
           <b-button disabled>
             <b-icon icon="check-all"></b-icon>
           </b-button>
         </div>
+      </div>
+      <div class="column">
+        <b-field>
+          <b-select placeholder="Sort order" v-model="filter.direction" :on-change="$emit('refresh')">
+            <option value="asc">Oldest first</option>
+            <option value="desc">Newest first</option>
+          </b-select>
+        </b-field>
       </div>
       <div class="column">
         <b-pagination
@@ -93,7 +101,7 @@ const currentPage = ref(calcPage(filter.value));
     >
       Those lazy people did not write anything new.
     </b-message>
-    <b-pagination
+    <b-pagination class="mt-4"
       @change="onPage(true)"
       :total="total"
       v-model="currentPage"

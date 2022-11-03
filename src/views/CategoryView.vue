@@ -6,6 +6,7 @@ import { orderBy as _orderBy } from "lodash";
 import { useFeedsStore } from "../stores/feeds";
 import type { Feed } from "../stores/feeds";
 import { ToastProgrammatic as Toast } from "buefy";
+import { DialogProgrammatic as Dialog } from 'buefy'
 
 const categoriesStore = useCategoriesStore();
 const feedsStore = useFeedsStore();
@@ -16,7 +17,7 @@ const cat = categoriesStore.getCategoryById(parseInt(route.params.id));
 const sortedFeeds = computed(() => {
   return _orderBy(cat?.feeds, "unread", "desc");
 });
-function refresh(feed: Feed) {
+function refreshFeed(feed: Feed) {
   feedsStore.refresh(feed).then((feed) => {
     if (feed.parsing_error_count === 0) {
       Toast.open({
@@ -35,33 +36,53 @@ function refresh(feed: Feed) {
     }
   });
 }
+function reload() {
+  feedsStore.getFeedCounters();
+}
+function markFeedAsRead(feed: Feed) {
+  Dialog.confirm({
+    title: "Mark all articles as read",
+    message: "Are you sure there's nothing interesting left?",
+    confirmText: "Pah",
+    type: "is-warning",
+    hasIcon: true,
+    onConfirm: () => feedsStore.markAsRead(feed),
+  });
+}
 </script>
 <template>
   <div class="container" v-if="cat">
     <div class="mb-4">
       <b-breadcrumb size="is-large">
-        <b-breadcrumb-item tag="router-link" :to="{ name: 'home' }"
-          >Categories</b-breadcrumb-item
-        >
+        <b-breadcrumb-item tag="router-link" :to="{ name: 'home' }">
+          Categories
+        </b-breadcrumb-item>
         <b-breadcrumb-item active>{{ cat.title }}</b-breadcrumb-item>
       </b-breadcrumb>
+    </div>
+    <div class="columns">
+      <div class="column">
+        <div class="buttons has-addons">
+          <b-button @click="reload()">
+            <b-icon icon="refresh"></b-icon>
+          </b-button>
+        </div>
+      </div>
     </div>
     <div class="columns is-multiline">
       <div class="column is-one-third">
         <div class="card">
           <router-link :to="{ name: 'cat-entries', params: { catId: cat.id } }">
             <header class="card-header">
-              <div class="card-header-title level">
-                <div class="level-left">
-                  <div class="level-item">All</div>
-                </div>
-                <div class="level-right">
-                  <div class="level-item">
+              <div class="card-header-title is-justify-content-space-between">
+                  <div>
+                    All
+                  </div>
+                  <div>
                     <b-tag :type="cat.total_unread > 0 ? 'is-primary' : ''">{{
                       cat.total_unread
                     }}</b-tag>
                   </div>
-                </div>
               </div>
             </header>
           </router-link>
@@ -89,37 +110,24 @@ function refresh(feed: Feed) {
             :to="{
               name: 'cat-feed-entries',
               params: { catId: cat.id, id: feed.id },
-            }"
-          >
-            <header
-              class="card-header"
-              :class="
-                feed.parsing_error_count > 0
-                  ? 'has-background-warning-light'
-                  : ''
-              "
-            >
-              <div class="card-header-title level">
-                <div class="level-left">
-                  <div class="level-item">
+            }">
+            <header class="card-header" :class=" feed.parsing_error_count > 0 ? 'has-background-warning-light' : '' ">
+              <div class="card-header-title is-justify-content-space-between">
+                  <div>
                     <b-tooltip
                       v-if="feed.parsing_error_count > 0"
                       :label="feed.parsing_error_message"
                       multilined
-                      type="is-warning"
-                    >
+                      type="is-warning">
                       <b-icon icon="alert-circle-outline"></b-icon>
                     </b-tooltip>
                     {{ feed.title }}
                   </div>
-                </div>
-                <div class="level-right">
-                  <div class="level-item">
-                    <b-tag :type="feed.unread > 0 ? 'is-primary' : ''">{{
-                      feed.unread
-                    }}</b-tag>
+                  <div>
+                    <b-tag :type="feed.unread > 0 ? 'is-primary' : ''">
+                      {{ feed.unread }}
+                    </b-tag>
                   </div>
-                </div>
               </div>
             </header>
           </router-link>
@@ -130,13 +138,13 @@ function refresh(feed: Feed) {
           </div>
           <footer class="card-footer">
             <div class="card-footer-item">
-              <a>
+              <a @click="markFeedAsRead(feed)">
                 <b-icon icon="check-all"></b-icon>
               </a>
             </div>
             <div class="card-footer-item">
-              <a @click="refresh(feed)">
-                <b-icon icon="refresh"></b-icon>
+              <a @click="refreshFeed(feed)">
+                <b-icon icon="sync"></b-icon>
               </a>
             </div>
           </footer>
