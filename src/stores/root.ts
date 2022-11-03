@@ -53,7 +53,7 @@ export const useRootStore = defineStore({
                 });
         },
         registerToken(token: string) {
-            axios.defaults.headers.common["X-Auth-Token"] = token;
+            this.backend.defaults.headers.common["X-Auth-Token"] = token;
             localStorage.setItem("token", token);
             return this.getUserProfile();
         },
