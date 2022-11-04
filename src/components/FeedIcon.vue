@@ -6,8 +6,10 @@ const props = defineProps(["feed"]);
 const feedsStore = useFeedsStore();
 
 const icon = ref(undefined as string | undefined);
-feedsStore.getIcon(props.feed)
-    .then(d => icon.value = d);
+if (props.feed?.icon.icon_id) {
+    feedsStore.getIcon(props.feed)
+        .then(d => icon.value = d);
+}
 </script>
 <template>
     <img v-if="icon" :src="'data:'+icon" class="feedIcon">

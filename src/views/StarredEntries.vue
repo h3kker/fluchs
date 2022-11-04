@@ -1,20 +1,14 @@
 <script setup lang="ts">
 import { useEntriesStore } from "../stores/entries";
 import EntryList from "../components/EntryList.vue";
-import { ref } from "vue";
 
 const entriesStore = useEntriesStore();
 
+entriesStore.filter.status = 'read';
+entriesStore.filter.offset = 0;
 function refresh(force = false) {
   entriesStore.getStarredEntries(force);
 }
-const isLoading = ref(false);
-const curState = ref("init");
-
-entriesStore.state.subscribe((v) => {
-  isLoading.value = v === "loading";
-  curState.value = v;
-});
 refresh();
 </script>
 <template>
@@ -22,9 +16,8 @@ refresh();
     <div class="mb-4">
       <h2>Starred Entries</h2>
     </div>
-    <div id="top" class="block" v-if="curState == 'ready'">
+    <div id="top" class="block">
       <EntryList @refresh="(force) => refresh(force)" />
     </div>
-    <b-loading v-model="isLoading"></b-loading>
   </div>
 </template>

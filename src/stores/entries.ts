@@ -33,8 +33,8 @@ type fetchType = "all" | "category" | "feed" | "starred";
 
 interface EntryFilter {
     status?: entryStatus | entryStatus[];
-    offset?: number;
-    limit?: number;
+    offset: number;
+    limit: number;
     order?: entrySortField;
     direction?: "asc" | "desc";
     before?: number;
@@ -92,7 +92,6 @@ export const useEntriesStore = defineStore({
                     break;
                 case "starred":
                     callParams.url = `/v1/entries`;
-                    delete callParams.filter.status;
                     callParams.filter.starred = true;
                     break;
             }

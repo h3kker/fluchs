@@ -3,7 +3,6 @@ import { useEntriesStore } from "../stores/entries";
 import { useCategoriesStore } from "../stores/categories";
 import { useFeedsStore } from "../stores/feeds";
 import { useRoute } from "vue-router/composables";
-import { ref } from "vue";
 import EntryList from "../components/EntryList.vue";
 
 const feedsStore = useFeedsStore();
@@ -14,6 +13,8 @@ const route = useRoute();
 const feed = feedsStore.getFeedById(parseInt(route.params.id));
 const cat = categoriesStore.getCategoryById(parseInt(route.params.catId));
 
+entriesStore.filter.offset = 0;
+
 function refresh(force = false) {
   if (feed) {
     entriesStore.getFeedEntries(feed.id, force);
@@ -21,13 +22,6 @@ function refresh(force = false) {
     entriesStore.getCategoryEntries(cat.id, force);
   }
 }
-
-const isLoading = ref(false);
-const curState = ref("init");
-entriesStore.state.subscribe((v) => {
-  isLoading.value = v === "loading";
-  curState.value = v;
-});
 
 refresh();
 </script>
@@ -50,9 +44,8 @@ refresh();
         <b-breadcrumb-item active v-else> All </b-breadcrumb-item>
       </b-breadcrumb>
     </div>
-    <div id="top" class="block" v-if="curState == 'ready'">
+    <div id="top" class="block">
       <EntryList @refresh="(force) => refresh(force)" />
     </div>
-    <b-loading v-model="isLoading"></b-loading>
   </div>
 </template>

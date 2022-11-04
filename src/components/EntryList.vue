@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useEntriesStore } from "../stores/entries";
 import type { Entry } from "../stores/entries";
 import ShowEntry from "./ShowEntry.vue";
@@ -11,18 +11,24 @@ const entriesStore = useEntriesStore();
 const { markAsRead } = entriesStore;
 const { entries, total, filter } = storeToRefs(entriesStore);
 
-function onPage(scrollTop = false) {
-  filter.value.offset = (currentPage.value - 1) * filter.value.limit;
-  emit("refresh");
-  if (scrollTop) {
-    document.getElementById("top")?.scrollIntoView({ behavior: "smooth" });
-  }
+const curState = ref("init");
+entriesStore.state.subscribe((v) => {
+  curState.value = v;
+});
+const isLoading = computed(() => curState.value === 'loading');
+
+function _refresh(force: boolean) {
+  emit("refresh", force);
 }
-function calcPage(filter: { offset?: number; limit?: number }): number {
-  return filter && filter.offset && filter.limit
-    ? Math.floor(filter.offset / filter.limit) + 1
-    : 1;
+function nextPage() {
+  filter.value.offset = (filter.value.offset || 0) + (filter.value.limit || 0);
+  _refresh(false);
 }
+function prevPage() {
+  filter.value.offset = Math.max(0, (filter.value.offset || 0) - (filter.value.limit || 0));
+  _refresh(false);
+}
+
 const isOpen = ref<number | undefined>(undefined);
 function openEntry(entry: Entry) {
   if (isOpen.value === entry.id) {
@@ -47,20 +53,17 @@ function markPageAsRead() {
         notification.close();
       },
     });
+    _refresh(true);
   });
 }
 
-const currentPage = ref(calcPage(filter.value));
-
-const showAll = ref(filter.value.status === 'read');
-function toggleAll(v: boolean) {
-  filter.value.status = v ? 'read' : 'unread';
-  emit('refresh');
-}
+const canNext = computed(() => (filter.value.offset + filter.value.limit) < total.value);
+const canPrev = computed(() => filter.value.offset > 0);
 
 </script>
 <template>
   <div>
+    <b-loading v-model="isLoading"></b-loading>
     <div class="columns">
       <div class="column">
         <div class="buttons has-addons">
@@ -70,27 +73,26 @@ function toggleAll(v: boolean) {
           <b-button @click="markPageAsRead()" :disabled="entries.length === 0">
             <b-icon icon="check"></b-icon>
           </b-button>
-          <b-button disabled>
-            <b-icon icon="check-all"></b-icon>
-          </b-button>
         </div>
       </div>
       <div class="column">
         <b-field grouped>
-          <b-select placeholder="Sort order" v-model="filter.direction" :on-change="$emit('refresh')">
+          <b-select placeholder="Sort order" v-model="filter.direction" @input="$emit('refresh')">
             <option value="asc">Oldest first</option>
             <option value="desc">Newest first</option>
           </b-select>
-          <b-switch v-model="showAll" @input="(v) => toggleAll(v)">Show All</b-switch>
+          <b-switch v-model="filter.status" true-value="read" false-value="unread" @input="$emit('refresh')">Show All</b-switch>
         </b-field>
       </div>
       <div class="column">
-        <b-pagination
-          @change="onPage(false)"
-          :total="total"
-          v-model="currentPage"
-          :per-page="filter.limit"
-        ></b-pagination>
+        <div class="buttons is-pulled-right has-addons">
+          <b-button @click="prevPage()" v-if="canPrev">
+            <b-icon icon="skip-previous"></b-icon>
+          </b-button>
+          <b-button @click="nextPage()" v-if="canNext">
+            <b-icon icon="skip-next"></b-icon>
+          </b-button>
+        </div>
       </div>
     </div>
 
@@ -102,25 +104,28 @@ function toggleAll(v: boolean) {
       ></ShowEntry>
     </div>
     <b-message
-      v-if="entries.length === 0"
+      v-if="curState === 'ready' && entries.length === 0"
       title="Nothing to see here."
       has-icon
       type="is-info"
     >
       Those lazy people did not write anything new.
     </b-message>
-    <div class="columns">
+    <div class="columns" v-else>
       <div class="column">
-        <b-button @click="markPageAsRead()" :disabled="entries.length === 0">
+        <b-button @click="markPageAsRead()">
           <b-icon icon="check"></b-icon>
         </b-button>
       </div>
       <div class="column">
-        <b-pagination class="mt-4"
-          @change="onPage(true)"
-          :total="total"
-          v-model="currentPage"
-          :per-page="filter.limit"></b-pagination>
+        <div class="buttons is-pulled-right has-addons">
+          <b-button @click="prevPage()" v-if="canPrev">
+            <b-icon icon="skip-previous"></b-icon>
+          </b-button>
+          <b-button @click="nextPage()" v-if="canNext">
+            <b-icon icon="skip-next"></b-icon>
+          </b-button>
+        </div>
       </div>
     </div>
   </div>
