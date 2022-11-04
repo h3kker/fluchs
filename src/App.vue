@@ -50,25 +50,28 @@ function search() {
     <b-loading v-model="isLoading"></b-loading>
     <header>
       <div class="container">
-        <b-navbar>
+        <b-navbar centered>
           <template #brand>
             <b-navbar-item tag="router-link" :to="{ path: '/' }">
-              Fluchshase!
+              <img src="./assets/klimtfox-wide.png">
             </b-navbar-item>
           </template>
           <template #start>
             <b-navbar-item tag="router-link" :to="{ name: 'starred-entries' }">
-              <b-icon icon="star"></b-icon>
+              <b-icon icon="star"></b-icon>&nbsp;
+              Starred
             </b-navbar-item>
             <b-navbar-item>
-              <b-input placeholder="Search..."
-                type="search"
-                v-model="searchText"
-                icon="text-search"
-                @icon-click="search()"
-                @keyup.enter.native="search()"
-                icon-clickable>
-              </b-input>
+              <b-field>
+                <b-input placeholder="Search..."
+                  type="search"
+                  v-model="searchText"
+                  icon="text-search"
+                  @icon-click="search()"
+                  @keyup.enter.native="search()"
+                  icon-clickable>
+                </b-input>
+              </b-field>
             </b-navbar-item>
           </template>
           <template #end>
@@ -104,4 +107,8 @@ function search() {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.navbar-brand img {
+  max-height: 2.5rem;
+}
+</style>
