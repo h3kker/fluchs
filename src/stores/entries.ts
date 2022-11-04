@@ -146,6 +146,17 @@ export const useEntriesStore = defineStore({
                     root.showError(e);
                 });
         },
+        async markAsRemoved(entry: Entry): Promise<void> {
+            const root = useRootStore();
+            await root.backend
+                .put("/v1/entries", { entry_ids: [ entry.id ], status: "removed" })
+                .then(() => {
+                    entry.status = "removed";
+                })
+                .catch((e) => {
+                    root.showError(e);
+                });
+        },
         async markEntriesAsRead(entries: Entry[]): Promise<void> {
             const root = useRootStore();
             const feeds = useFeedsStore();

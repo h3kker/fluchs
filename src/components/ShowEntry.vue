@@ -8,7 +8,7 @@ defineEmits(["open-entry"]);
 
 const entriesStore = useEntriesStore();
 
-const { toggleStar, markAsRead, markAsUnread } = entriesStore;
+const { toggleStar, markAsRead, markAsUnread, markAsRemoved } = entriesStore;
 
 function openExternal() {
   window.open(props.entry.url, "_blank");
@@ -49,13 +49,9 @@ function visibilityChanged(state: any) {
         </div>
         <div class="card-footer-item">
           <a 
-            @click="
-              entry.status == 'read' ? markAsUnread(entry) : markAsRead(entry)
-            "
-          >
-            <b-icon size="small"
-              :icon="entry.status == 'read' ? 'email-outline' : 'check'"
-            ></b-icon>
+              @click.exact="entry.status == 'read' ? markAsUnread(entry) : markAsRead(entry)"
+              @click.shift="markAsRemoved(entry)">
+            <b-icon size="small" :icon="entry.status == 'read' ? 'email-outline' : 'check'"></b-icon>
           </a>
         </div>
         <div class="card-footer-item">
