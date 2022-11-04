@@ -6,7 +6,7 @@
     "build": "run-p type-check build-only",
     "preview": "vite preview --port 4173",
     "test:unit": "vitest --environment jsdom",
-    "build-only": "vite build",
+    "build-only": "vite build --base=/fluchs/",
     "type-check": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
@@ -20,7 +20,7 @@
     "rxjs": "^7.5.7",
     "vue": "^2.7.7",
     "vue-router": "^3.5.4",
-    "vue-waypoint": "^4.2.4"
+    "vue-waypoint": "4.2.4"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.0",
