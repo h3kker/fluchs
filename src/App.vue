@@ -116,6 +116,13 @@ function doRegisterToken(s: string, t: string) {
         </div>
       </main>
     </section>
+    <footer class="footer">
+      <div class="content has-text-centered">
+        (c) 2022 Heinz Axelsson-Ekker - 
+        <a href="https://codeberg.org/hekker/fluchs">View Source <img src="./assets/codeberg.svg"></a> - 
+        <a href="http://opensource.org/licenses/mit-license.php">MIT Licence</a>.
+      </div>
+    </footer>
     <b-modal v-model="showLogin" has-model-card trap-focus>
       <template #default="props">
         <LoginModal :server="server" :token="token" :error="loginError" @close="props.close" @login="(s, t) => doRegisterToken(s, t)" />
