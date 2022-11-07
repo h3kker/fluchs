@@ -5,36 +5,30 @@ import { useRouter } from "vue-router/composables";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import { DialogProgrammatic as Dialog } from "buefy";
+import LoginModal from "@/components/LoginModal.vue";
+import { AxiosError } from "axios";
 
 const router = useRouter();
 const rootStore = useRootStore();
 const feedsStore = useFeedsStore();
 
-const { user, isLoggedIn } = storeToRefs(rootStore);
+const { user, isLoggedIn, server, token } = storeToRefs(rootStore);
 const { getUserProfile, registerToken, clearToken } = rootStore;
 const { getFeeds, getFeedCounters } = feedsStore;
 
-getUserProfile().then(() => {
-  return getFeeds();
-}).then(() => {
-  getFeedCounters();
-});
+function loadInit() {
+  return getUserProfile().then(() => {
+    return getFeeds();
+  }).then(() => {
+    getFeedCounters();
+  }).catch(() => {});
+}
+loadInit();
 
 const isLoading = ref(true);
 rootStore.state.subscribe((v) => (isLoading.value = v === "checking"));
 
-function promptForToken() {
-  Dialog.prompt({
-    message: "Gimme da token",
-    inputAttrs: {
-      placeholder: "Create a token in miniflux and enter it here",
-    },
-    trapFocus: true,
-    onConfirm: (value: string) => {
-      registerToken(value);
-    },
-  });
-}
+const showLogin = ref(false);
 
 const searchText = ref('');
 function search() {
@@ -42,6 +36,24 @@ function search() {
     name: 'all-entries',
     query: { q: searchText.value }
   });
+}
+
+const loginError = ref('');
+function doRegisterToken(s: string, t: string) {
+  loginError.value = '';
+  registerToken(s, t)
+    .then(() => {
+      return getFeeds()
+    })
+    .then(() => {
+      getFeedCounters();
+      showLogin.value = false;
+    })
+    .catch((e: AxiosError) => {
+      loginError.value = 
+        e.response?.status === 401 ?  "Invalid token" :
+        e.code === "ERR_NETWORK" ? "Invalid Server URL" : e.message;
+    });
 }
 </script>
 
@@ -79,7 +91,7 @@ function search() {
               <b-navbar-item @click="clearToken()"> Log out </b-navbar-item>
             </b-navbar-dropdown>
             <b-navbar-item tag="div" v-else>
-              <button @click="promptForToken()" class="button is-info">
+              <button @click="showLogin = true" class="button is-info">
                 Log in
               </button>
             </b-navbar-item>
@@ -98,12 +110,17 @@ function search() {
           <div class="column is-one-third"></div>
           <div class="column is-one-third">
             <b-message title="No Token!" type="is-danger" has-icon>
-              Cannot do much without a token. Please to configure.
+              Cannot do much without a token. Please to log in.
             </b-message>
           </div>
         </div>
       </main>
     </section>
+    <b-modal v-model="showLogin" has-model-card trap-focus>
+      <template #default="props">
+        <LoginModal :server="server" :token="token" :error="loginError" @close="props.close" @login="(s, t) => doRegisterToken(s, t)" />
+      </template>
+    </b-modal>
   </div>
 </template>
 

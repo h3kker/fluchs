@@ -23,22 +23,30 @@ interface User {
 }
 
 const token = localStorage.getItem("token") || "";
-if (token !== "") {
+const server = localStorage.getItem("server") || "";
+if (token !== "" && server !== "") {
     axios.defaults.headers.common["X-Auth-Token"] = token;
+    axios.defaults.baseURL = server;
 }
 
-type rootState = "init" | "checking" | "ready";
+type rootState = "init" | "checking" | "ready" | "auth_needed";
 
 export const useRootStore = defineStore({
     id: "root",
     state: () => ({
-        backend: axios.create({ baseURL: "https://fluchs.testha.se" }),
+        backend: axios.create(),
+        server: server,
+        token: token,
         user: {} as User,
         isLoggedIn: false,
         state: new BehaviorSubject<rootState>("init"),
     }),
     actions: {
         async getUserProfile() {
+            if (!this.server || !this.token) {
+                this.state.next('auth_needed');
+                throw Error("Not logged in");
+            }
             this.state.next("checking");
             this.user = await this.backend
                 .get("/v1/me")
@@ -48,17 +56,22 @@ export const useRootStore = defineStore({
                     return r.data;
                 })
                 .catch((e) => {
-                    this.state.next("ready");
-                    this.showError(e);
+                    this.state.next("auth_needed");
+                    throw e;
                 });
         },
-        registerToken(token: string) {
-            this.backend.defaults.headers.common["X-Auth-Token"] = token;
-            localStorage.setItem("token", token);
+        registerToken(server: string, token: string) {
+            this.server = server;
+            this.token = token;
+            this.backend.defaults.baseURL = this.server;
+            this.backend.defaults.headers.common["X-Auth-Token"] = this.token;
+            localStorage.setItem("token", this.token);
+            localStorage.setItem("server", this.server);
             return this.getUserProfile();
         },
         clearToken() {
             localStorage.removeItem("token");
+            this.token = "";
             this.isLoggedIn = false;
         },
         showError(e: any) {
